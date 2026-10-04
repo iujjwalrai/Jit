@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# "shebang": tells the OS to run this file with bash; /usr/bin/env finds bash wherever it's installed
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ${BASH_SOURCE[0]}  = this script's own path, e.g. "../jit" when run from sandbox/
+# dirname            = strip the filename -> ".."
+# cd .. && pwd       = turn that into an absolute path -> "/home/ujjwal/jit"
+# So the script finds the jar no matter which folder you run it from.
+
+exec java -jar "$DIR/target/jit.jar" "$@"
+# exec  = replace the bash process with java (no leftover shell; java's exit code becomes the script's exit code)
+# "$@"  = forward every argument exactly as typed, keeping spaces intact ("my file.txt" stays one argument)
+
