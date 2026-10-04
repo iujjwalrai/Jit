@@ -1,9 +1,9 @@
 package dev.jit.storage;
 
 import dev.jit.util.Hashing;
+import dev.jit.util.LockFile;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Map;
@@ -63,23 +63,20 @@ public final class Refs {
     public void update(String name, String newId, String expectedOld) throws IOException {
         if (!Hashing.isFullHex(newId) || newId.equals(ZERO_ID)) throw new IllegalArgumentException("invalid object id: " + newId);
         String target = deref(name);
-        withLock(target, expectedOld, lock -> write(lock, newId + "\n"));
+        withLock(target, expectedOld, lock -> commit(lock, newId + "\n"));
     }
 
     /** Make a symbolic ref, e.g. setSymbolic("HEAD", "refs/heads/feature") is what switching branches does. */
     public void setSymbolic(String name, String target) throws IOException {
         checkName(target);
         if (!target.startsWith("refs/")) throw new IllegalArgumentException("refusing to point " + name + " outside refs/: " + target);
-        withLock(name, null, lock -> write(lock, SYMREF_PREFIX + target + "\n"));
+        withLock(name, null, lock -> commit(lock, SYMREF_PREFIX + target + "\n"));
     }
 
     /** Remove a ref (following symbolic refs, so deleting HEAD on a branch deletes the branch). */
     public void delete(String name, String expectedOld) throws IOException {
         String target = deref(name);
-        withLock(target, expectedOld, lock -> {
-            Files.deleteIfExists(path(target));
-            Files.delete(lock);
-        });
+        withLock(target, expectedOld, lock -> Files.deleteIfExists(path(target)));
         // remove now-empty folders (refs/heads/feature/), else they'd block a future ref named refs/heads/feature.
         // Stops above refs/heads/, refs/tags/, ...: those stay even when empty, as init made them.
         Path refsDir = jitDir.resolve("refs");
@@ -123,40 +120,22 @@ public final class Refs {
 
     private Path path(String name) { return jitDir.resolve(name); }
 
-    private interface LockedAction { void run(Path lock) throws IOException; }
+    private interface LockedAction { void run(LockFile lock) throws IOException; }
 
-    /**
-     * Git's locking: create "<ref>.lock" exclusively (fails if another process holds it), check the old value,
-     * write the new content into the lock file, then rename it over the ref. The rename is atomic, so a
-     * reader sees either the old id or the new one, never half a file.
-     */
+    /** Hold the ref's lock while checking its old value and changing it (see LockFile). */
     private void withLock(String name, String expectedOld, LockedAction action) throws IOException {
-        Path ref = path(name);
-        Path lock = ref.resolveSibling(ref.getFileName() + ".lock");
-        Files.createDirectories(ref.getParent());
-        try {
-            Files.createFile(lock);                                  // atomic "create only if absent"
-        } catch (FileAlreadyExistsException e) {
-            throw new IllegalStateException("unable to lock " + name + ": " + lock + " exists.\n"
-                    + "Another jit process may be running; if not, delete that file.");
-        }
-        try {
+        try (LockFile lock = LockFile.acquire(path(name))) {
             if (expectedOld != null) {
                 String actual = readRaw(name).orElse(ZERO_ID);
                 if (!actual.equals(expectedOld))
                     throw new IllegalStateException("cannot update " + name + ": expected " + expectedOld + ", found " + actual);
             }
             action.run(lock);
-        } finally {
-            Files.deleteIfExists(lock);                              // no-op if the action already moved/deleted it
         }
     }
 
-    private void write(Path lock, String content) throws IOException {
-        try (OutputStream out = Files.newOutputStream(lock)) {
-            out.write(content.getBytes(StandardCharsets.UTF_8));
-        }
-        Files.move(lock, lock.resolveSibling(lock.getFileName().toString().replaceFirst("\\.lock$", "")),
-                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    private static void commit(LockFile lock, String content) throws IOException {
+        lock.write(content.getBytes(StandardCharsets.UTF_8));
+        lock.commit();
     }
 }

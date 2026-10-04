@@ -4,6 +4,7 @@ import dev.jit.core.Config;
 import dev.jit.core.Identity;
 import dev.jit.core.Repository;
 import dev.jit.core.TreeWriter;
+import dev.jit.index.Index;
 import dev.jit.objects.Commit;
 import dev.jit.objects.Tree;
 import dev.jit.storage.ObjectStore;
@@ -15,12 +16,12 @@ import java.util.Optional;
 
 /**
  * jit commit -m <message>... [--allow-empty]
- * The three plumbing steps in one: write-tree, commit-tree -p HEAD, update-ref HEAD.
- * (No index yet, so it snapshots the whole working directory.)
+ * The three plumbing steps in one: write-tree (from the index), commit-tree -p HEAD, update-ref HEAD.
+ * Only what's been `jit add`ed goes in; other edits stay in the working directory for a later commit.
  */
 public final class CommitCommand implements Command {
     public String name()  { return "commit"; }
-    public String usage() { return "-m <msg>... [--allow-empty]  record the working directory as a new commit"; }
+    public String usage() { return "-m <msg>... [--allow-empty]  record the staged files as a new commit"; }
 
     public int run(String[] args) throws Exception {
         List<String> messages = new ArrayList<>();
@@ -44,10 +45,10 @@ public final class CommitCommand implements Command {
         Refs refs = repo.refs();
 
         Optional<String> parent = refs.read("HEAD");                      // empty on the very first commit
-        String tree = new TreeWriter(store).write(repo.workTree());
+        String tree = new TreeWriter(store).write(Index.load(repo.indexFile()));
         String parentTree = parent.isPresent() ? store.readCommit(parent.get()).tree() : ObjectStore.hash(new Tree(List.of()));
-        if (!allowEmpty && tree.equals(parentTree)) {                     // same snapshot as last time
-            System.out.println("nothing to commit, working tree clean");
+        if (!allowEmpty && tree.equals(parentTree)) {                     // nothing staged since last commit
+            System.out.println("nothing to commit (stage changes with \"jit add\")");
             return 1;
         }
 

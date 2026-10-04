@@ -50,6 +50,14 @@ public final class Repository {
     public Path jitDir()   { return jitDir; }
     public ObjectStore objects() { return objects; }
     public Refs refs()           { return refs; }
+    public Path indexFile()      { return jitDir.resolve("index"); }
+
+    /** A path the user typed (relative to where they are) -> repo-relative with "/" separators; "" = the root. */
+    public String toRepoPath(Path userPath) {
+        Path abs = userPath.toAbsolutePath().normalize();
+        if (!abs.startsWith(workTree)) throw new IllegalArgumentException(userPath + " is outside the repository at " + workTree);
+        return workTree.relativize(abs).toString().replace('\\', '/');
+    }
     public Config config() throws IOException { return Config.load(jitDir.resolve("config")); }   // re-read each time: user may edit it
 
     private static void writeIfAbsent(Path p, String content) throws IOException {

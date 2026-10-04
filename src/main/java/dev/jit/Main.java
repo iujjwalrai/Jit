@@ -1,5 +1,6 @@
 package dev.jit;
 
+import dev.jit.cli.AddCommand;
 import dev.jit.cli.CatFileCommand;
 import dev.jit.cli.Command;
 import dev.jit.cli.CommitCommand;
@@ -7,6 +8,7 @@ import dev.jit.cli.CommitTreeCommand;
 import dev.jit.cli.HashObjectCommand;
 import dev.jit.cli.InitCommand;
 import dev.jit.cli.LogCommand;
+import dev.jit.cli.LsFilesCommand;
 import dev.jit.cli.LsTreeCommand;
 import dev.jit.cli.RevParseCommand;
 import dev.jit.cli.SymbolicRefCommand;
@@ -21,12 +23,14 @@ public final class Main {
 
     static {
         register(new InitCommand());
+        register(new AddCommand());
         register(new CommitCommand());
         register(new LogCommand());
         register(new HashObjectCommand());
         register(new CatFileCommand());
         register(new WriteTreeCommand());
         register(new LsTreeCommand());
+        register(new LsFilesCommand());
         register(new CommitTreeCommand());
         register(new UpdateRefCommand());
         register(new SymbolicRefCommand());
