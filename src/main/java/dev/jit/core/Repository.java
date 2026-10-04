@@ -3,17 +3,21 @@ package dev.jit.core;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import dev.jit.storage.ObjectStore; 
 public final class Repository {
     public static final String DIR_NAME = ".jit";
 
     private final Path workTree;
     private final Path jitDir;
+    private final ObjectStore objects; 
 
     private Repository(Path workTree) {
         this.workTree = workTree.toAbsolutePath().normalize();
         this.jitDir = this.workTree.resolve(DIR_NAME);
+        this.objects = new ObjectStore(jitDir.resolve("objects"));
     }
+
+    
 
     public static Repository init(Path where) throws IOException {
         Repository repo = new Repository(where);
@@ -35,9 +39,13 @@ public final class Repository {
         }
         throw new IllegalStateException("not a jit repository (or any parent): " + DIR_NAME);
     }
+    public static Repository findFromCwd() {                         // new: find the repo from wherever you are
+        return find(Path.of(""));                                    // "" = the current directory
+    }
 
     public Path workTree() { return workTree; }
     public Path jitDir()   { return jitDir; }
+    public ObjectStore objects() { return objects; } 
 
     private static void writeIfAbsent(Path p, String content) throws IOException {
         if (!Files.exists(p)) Files.writeString(p, content);

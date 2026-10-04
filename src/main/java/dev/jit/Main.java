@@ -11,6 +11,8 @@ public final class Main {
 
     static {
         register(new InitCommand());
+        register(new HashObjectCommand());
+        register(new CatFileCommand());
     }
 
     private static void register(Command c) { COMMANDS.put(c.name(), c); }
