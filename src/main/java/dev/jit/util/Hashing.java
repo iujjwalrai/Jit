@@ -21,7 +21,7 @@ public final class Hashing {
     /** 20 raw bytes -> 40 hex characters, e.g. 3b18e5... */
     public static String toHex(byte[] raw) { return HEX.formatHex(raw); }
 
-    /** 40 hex characters -> 20 raw bytes (needed for trees in the next milestone). */
+    /** 40 hex characters -> 20 raw bytes (tree entries store ids this way). */
     public static byte[] fromHex(String hex) { return HEX.parseHex(hex); }
 
     public static boolean isFullHex(String s) {

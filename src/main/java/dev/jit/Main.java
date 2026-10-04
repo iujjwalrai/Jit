@@ -1,7 +1,11 @@
 package dev.jit;
 
+import dev.jit.cli.CatFileCommand;
 import dev.jit.cli.Command;
+import dev.jit.cli.HashObjectCommand;
 import dev.jit.cli.InitCommand;
+import dev.jit.cli.LsTreeCommand;
+import dev.jit.cli.WriteTreeCommand;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,6 +17,8 @@ public final class Main {
         register(new InitCommand());
         register(new HashObjectCommand());
         register(new CatFileCommand());
+        register(new WriteTreeCommand());
+        register(new LsTreeCommand());
     }
 
     private static void register(Command c) { COMMANDS.put(c.name(), c); }

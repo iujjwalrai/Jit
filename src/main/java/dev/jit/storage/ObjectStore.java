@@ -2,6 +2,7 @@ package dev.jit.storage;
 
 import dev.jit.objects.GitObject;
 import dev.jit.objects.ObjectType;
+import dev.jit.objects.Tree;
 import dev.jit.util.Hashing;
 
 import java.io.IOException;
@@ -66,6 +67,14 @@ public final class ObjectStore {
         byte[] body = new byte[bodyLen];
         System.arraycopy(raw, nul + 1, body, 0, bodyLen);
         return new RawObject(type, body);
+    }
+
+    /** Read an object that must be a tree, and parse it. */
+    public Tree readTree(String id) throws IOException {
+        RawObject obj = read(id);
+        if (obj.type() != ObjectType.TREE)
+            throw new IllegalStateException("not a tree object: " + id + " (it's a " + obj.type().wireName() + ")");
+        return Tree.parse(obj.body());
     }
 
     /** Expand a short id like "3b18e5" to the full 40 chars, like git does. */
