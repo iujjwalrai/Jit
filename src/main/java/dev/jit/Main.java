@@ -6,6 +6,9 @@ import dev.jit.cli.CommitTreeCommand;
 import dev.jit.cli.HashObjectCommand;
 import dev.jit.cli.InitCommand;
 import dev.jit.cli.LsTreeCommand;
+import dev.jit.cli.RevParseCommand;
+import dev.jit.cli.SymbolicRefCommand;
+import dev.jit.cli.UpdateRefCommand;
 import dev.jit.cli.WriteTreeCommand;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -21,6 +24,9 @@ public final class Main {
         register(new WriteTreeCommand());
         register(new LsTreeCommand());
         register(new CommitTreeCommand());
+        register(new UpdateRefCommand());
+        register(new SymbolicRefCommand());
+        register(new RevParseCommand());
     }
 
     private static void register(Command c) { COMMANDS.put(c.name(), c); }

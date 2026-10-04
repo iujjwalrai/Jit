@@ -1,6 +1,7 @@
 package dev.jit.cli;
 
 import dev.jit.core.Repository;
+import dev.jit.core.Revision;
 import dev.jit.objects.ObjectType;
 import dev.jit.objects.Tree;
 import dev.jit.storage.RawObject;
@@ -8,12 +9,12 @@ import dev.jit.storage.RawObject;
 /** jit cat-file (-t | -s | -p) <id> */
 public final class CatFileCommand implements Command {
     public String name()  { return "cat-file"; }
-    public String usage() { return "(-t|-s|-p) <id>  show an object's type, size or content"; }
+    public String usage() { return "(-t|-s|-p) <rev>  show an object's type, size or content"; }
 
     public int run(String[] args) throws Exception {
         if (args.length != 2) throw new IllegalArgumentException("usage: jit cat-file (-t|-s|-p) <id>");
         Repository repo = Repository.findFromCwd();
-        String id = repo.objects().resolvePrefix(args[1]);
+        String id = Revision.resolve(repo, args[1]);                  // id, short id, HEAD, main~1, ...
         RawObject obj = repo.objects().read(id);
 
         switch (args[0]) {

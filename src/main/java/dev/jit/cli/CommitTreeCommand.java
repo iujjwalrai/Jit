@@ -3,6 +3,7 @@ package dev.jit.cli;
 import dev.jit.core.Config;
 import dev.jit.core.Identity;
 import dev.jit.core.Repository;
+import dev.jit.core.Revision;
 import dev.jit.objects.Commit;
 import dev.jit.storage.ObjectStore;
 
@@ -31,11 +32,11 @@ public final class CommitTreeCommand implements Command {
 
         Repository repo = Repository.findFromCwd();
         ObjectStore store = repo.objects();
-        String treeId = store.resolvePrefix(tree);
+        String treeId = Revision.resolve(repo, tree);
         store.readTree(treeId);                                      // fail now if it's missing or not a tree
         List<String> parentIds = new ArrayList<>();
         for (String p : parents) {
-            String id = store.resolvePrefix(p);
+            String id = Revision.resolve(repo, p);                   // -p HEAD works
             store.readCommit(id);                                    // parents must be commits
             parentIds.add(id);
         }

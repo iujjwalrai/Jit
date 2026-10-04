@@ -3,18 +3,21 @@ package dev.jit.core;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import dev.jit.storage.ObjectStore; 
+import dev.jit.storage.ObjectStore;
+import dev.jit.storage.Refs;
 public final class Repository {
     public static final String DIR_NAME = ".jit";
 
     private final Path workTree;
     private final Path jitDir;
-    private final ObjectStore objects; 
+    private final ObjectStore objects;
+    private final Refs refs;
 
     private Repository(Path workTree) {
         this.workTree = workTree.toAbsolutePath().normalize();
         this.jitDir = this.workTree.resolve(DIR_NAME);
         this.objects = new ObjectStore(jitDir.resolve("objects"));
+        this.refs = new Refs(jitDir);
     }
 
     
@@ -45,7 +48,8 @@ public final class Repository {
 
     public Path workTree() { return workTree; }
     public Path jitDir()   { return jitDir; }
-    public ObjectStore objects() { return objects; } 
+    public ObjectStore objects() { return objects; }
+    public Refs refs()           { return refs; }
     public Config config() throws IOException { return Config.load(jitDir.resolve("config")); }   // re-read each time: user may edit it
 
     private static void writeIfAbsent(Path p, String content) throws IOException {

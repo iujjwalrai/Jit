@@ -75,6 +75,16 @@ public final class ObjectStore {
         return Tree.parse(readBody(id, ObjectType.TREE));
     }
 
+    /** A tree id as-is, or the tree a commit points at. Commands like ls-tree accept either ("tree-ish"). */
+    public String peelToTree(String id) throws IOException {
+        ObjectType type = read(id).type();
+        if (type == ObjectType.TREE) return id;
+        if (type == ObjectType.COMMIT) return readCommit(id).tree();
+        throw new IllegalStateException("not a tree or commit: " + id + " (it's a " + type.wireName() + ")");
+    }
+
+    public boolean contains(String id) { return Files.exists(pathFor(id)); }
+
     /** Read an object that must be a commit, and parse it. */
     public Commit readCommit(String id) throws IOException {
         return Commit.parse(readBody(id, ObjectType.COMMIT));

@@ -1,16 +1,17 @@
 package dev.jit.cli;
 
 import dev.jit.core.Repository;
+import dev.jit.core.Revision;
 import dev.jit.objects.Tree;
 import dev.jit.objects.TreeEntry;
 import dev.jit.storage.ObjectStore;
 
 import java.io.IOException;
 
-/** jit ls-tree [-r] [-t] [--name-only] <tree-id> */
+/** jit ls-tree [-r] [-t] [--name-only] <tree-ish>   (a tree, or a commit meaning its tree) */
 public final class LsTreeCommand implements Command {
     public String name()  { return "ls-tree"; }
-    public String usage() { return "[-r] [-t] [--name-only] <id>  list a tree's entries"; }
+    public String usage() { return "[-r] [-t] [--name-only] <rev>  list a tree's entries"; }
 
     private boolean recursive, showTrees, nameOnly;
 
@@ -24,10 +25,12 @@ public final class LsTreeCommand implements Command {
                 default            -> id = a;
             }
         }
-        if (id == null) throw new IllegalArgumentException("usage: jit ls-tree [-r] [-t] [--name-only] <id>");
+        if (id == null) throw new IllegalArgumentException("usage: jit ls-tree [-r] [-t] [--name-only] <tree-ish>");
 
-        ObjectStore store = Repository.findFromCwd().objects();
-        print(store, store.readTree(store.resolvePrefix(id)), "");
+        Repository repo = Repository.findFromCwd();
+        ObjectStore store = repo.objects();
+        String treeId = store.peelToTree(Revision.resolve(repo, id));   // a commit means "its tree", like git
+        print(store, store.readTree(treeId), "");
         return 0;
     }
 
