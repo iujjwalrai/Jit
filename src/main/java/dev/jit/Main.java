@@ -11,6 +11,7 @@ import dev.jit.cli.LogCommand;
 import dev.jit.cli.LsFilesCommand;
 import dev.jit.cli.LsTreeCommand;
 import dev.jit.cli.RevParseCommand;
+import dev.jit.cli.StatusCommand;
 import dev.jit.cli.SymbolicRefCommand;
 import dev.jit.cli.UpdateRefCommand;
 import dev.jit.cli.WriteTreeCommand;
@@ -23,6 +24,7 @@ public final class Main {
 
     static {
         register(new InitCommand());
+        register(new StatusCommand());
         register(new AddCommand());
         register(new CommitCommand());
         register(new LogCommand());

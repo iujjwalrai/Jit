@@ -10,9 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -36,15 +38,30 @@ public final class Index {
     private static final int NAME_MASK = 0xFFF;
     private static final int EXTENDED_FLAG = 0x4000;         // version 3: two more flag bytes follow
 
-    // path -> entry, in git's order: compare paths as raw UTF-8 bytes
-    private final TreeMap<String, IndexEntry> entries = new TreeMap<>(
-            (a, b) -> Arrays.compareUnsigned(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8)));
+    /** Git's path order everywhere (index, status output): compare as raw UTF-8 bytes. */
+    public static final Comparator<String> PATH_ORDER =
+            (a, b) -> Arrays.compareUnsigned(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
+
+    private final TreeMap<String, IndexEntry> entries = new TreeMap<>(PATH_ORDER);
+    private Instant fileTime;                                 // when the index file was last written; null if new
 
     public static Index load(Path file) throws IOException {
         Index index = new Index();
         if (!Files.exists(file)) return index;               // nothing staged yet: same as an empty index
         index.parse(Files.readAllBytes(file));
+        index.fileTime = Files.getLastModifiedTime(file).toInstant();
         return index;
+    }
+
+    /**
+     * The "racy git" problem: if a file was changed in the same instant the index was written, its stat
+     * can match the index even though the content differs. So an entry whose mtime is not strictly older
+     * than the index file can't be trusted, and its content must be re-hashed.
+     */
+    public boolean isRacy(IndexEntry e) {
+        if (fileTime == null) return true;
+        Instant mtime = Instant.ofEpochSecond(Integer.toUnsignedLong(e.stat().mtimeSec()), e.stat().mtimeNsec());
+        return !mtime.isBefore(fileTime);
     }
 
     public Collection<IndexEntry> entries() { return entries.values(); }

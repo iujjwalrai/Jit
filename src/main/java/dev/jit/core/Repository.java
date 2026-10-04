@@ -58,6 +58,13 @@ public final class Repository {
         if (!abs.startsWith(workTree)) throw new IllegalArgumentException(userPath + " is outside the repository at " + workTree);
         return workTree.relativize(abs).toString().replace('\\', '/');
     }
+
+    /** The reverse, for output: a repo path as seen from the current directory, e.g. "../README.md". */
+    public String displayPath(String repoPath) {
+        Path cwd = Path.of("").toAbsolutePath().normalize();
+        String rel = cwd.relativize(workTree.resolve(repoPath)).toString().replace('\\', '/');
+        return repoPath.endsWith("/") && !rel.endsWith("/") ? rel + "/" : rel;   // keep the "dir/" marker
+    }
     public Config config() throws IOException { return Config.load(jitDir.resolve("config")); }   // re-read each time: user may edit it
 
     private static void writeIfAbsent(Path p, String content) throws IOException {
