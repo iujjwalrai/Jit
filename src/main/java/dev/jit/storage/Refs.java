@@ -6,7 +6,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.stream.Stream;
 
 /**
  * Named pointers to commits. Each ref is a tiny text file under .jit:
@@ -30,6 +33,21 @@ public final class Refs {
         String id = content.get();
         if (!Hashing.isFullHex(id)) throw new IllegalStateException("corrupt ref " + name + ": " + id);
         return Optional.of(id);
+    }
+
+    /** Every ref under refs/ with the id it resolves to, sorted by name. */
+    public Map<String, String> listAll() throws IOException {
+        Map<String, String> all = new TreeMap<>();
+        Path refsDir = jitDir.resolve("refs");
+        if (!Files.isDirectory(refsDir)) return all;
+        try (Stream<Path> files = Files.walk(refsDir)) {
+            for (Path f : files.filter(Files::isRegularFile).toList()) {
+                String name = jitDir.relativize(f).toString().replace('\\', '/');   // Windows paths -> ref names
+                if (!isValidName(name)) continue;                                   // skips *.lock files too
+                read(name).ifPresent(id -> all.put(name, id));
+            }
+        }
+        return all;
     }
 
     /** Where a symbolic ref points ("refs/heads/main"), or empty if it holds an id directly. */

@@ -37,6 +37,17 @@ public record Commit(String tree, List<String> parents, Signature author, Signat
         return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
+    /** The first paragraph on one line: what log --oneline and commit print. */
+    public String subject() {
+        StringBuilder sb = new StringBuilder();
+        for (String line : message.split("\n")) {
+            if (line.isBlank()) { if (!sb.isEmpty()) break; else continue; }   // skip leading blanks, stop at the first gap
+            if (!sb.isEmpty()) sb.append(' ');
+            sb.append(line);
+        }
+        return sb.toString();
+    }
+
     public static Commit parse(byte[] body) {
         String text = new String(body, StandardCharsets.UTF_8);
         int split = text.indexOf("\n\n");                       // first blank line ends the headers
