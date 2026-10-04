@@ -2,6 +2,7 @@ package dev.jit;
 
 import dev.jit.cli.CatFileCommand;
 import dev.jit.cli.Command;
+import dev.jit.cli.CommitTreeCommand;
 import dev.jit.cli.HashObjectCommand;
 import dev.jit.cli.InitCommand;
 import dev.jit.cli.LsTreeCommand;
@@ -19,6 +20,7 @@ public final class Main {
         register(new CatFileCommand());
         register(new WriteTreeCommand());
         register(new LsTreeCommand());
+        register(new CommitTreeCommand());
     }
 
     private static void register(Command c) { COMMANDS.put(c.name(), c); }

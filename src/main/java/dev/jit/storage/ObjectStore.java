@@ -1,5 +1,6 @@
 package dev.jit.storage;
 
+import dev.jit.objects.Commit;
 import dev.jit.objects.GitObject;
 import dev.jit.objects.ObjectType;
 import dev.jit.objects.Tree;
@@ -71,10 +72,20 @@ public final class ObjectStore {
 
     /** Read an object that must be a tree, and parse it. */
     public Tree readTree(String id) throws IOException {
+        return Tree.parse(readBody(id, ObjectType.TREE));
+    }
+
+    /** Read an object that must be a commit, and parse it. */
+    public Commit readCommit(String id) throws IOException {
+        return Commit.parse(readBody(id, ObjectType.COMMIT));
+    }
+
+    private byte[] readBody(String id, ObjectType expected) throws IOException {
         RawObject obj = read(id);
-        if (obj.type() != ObjectType.TREE)
-            throw new IllegalStateException("not a tree object: " + id + " (it's a " + obj.type().wireName() + ")");
-        return Tree.parse(obj.body());
+        if (obj.type() != expected)
+            throw new IllegalStateException("not a " + expected.wireName() + " object: " + id
+                    + " (it's a " + obj.type().wireName() + ")");
+        return obj.body();
     }
 
     /** Expand a short id like "3b18e5" to the full 40 chars, like git does. */

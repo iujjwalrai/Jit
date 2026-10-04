@@ -46,6 +46,7 @@ public final class Repository {
     public Path workTree() { return workTree; }
     public Path jitDir()   { return jitDir; }
     public ObjectStore objects() { return objects; } 
+    public Config config() throws IOException { return Config.load(jitDir.resolve("config")); }   // re-read each time: user may edit it
 
     private static void writeIfAbsent(Path p, String content) throws IOException {
         if (!Files.exists(p)) Files.writeString(p, content);

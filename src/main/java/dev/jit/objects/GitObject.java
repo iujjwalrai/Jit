@@ -2,7 +2,7 @@ package dev.jit.objects;
 
 import java.nio.charset.StandardCharsets;
 
-/** Anything stored in .jit/objects. Blob and Tree now; Commit in a later milestone. */
+/** Anything stored in .jit/objects. Blob, Tree or Commit. */
 public interface GitObject {
 
     ObjectType type();
